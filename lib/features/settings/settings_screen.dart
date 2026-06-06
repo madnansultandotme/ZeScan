@@ -29,7 +29,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
     final count = state.documents.length;
-    final isPro = state.isProUnlocked;
     final isDark = state.isDarkMode;
 
     return Padding(
@@ -46,76 +45,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 1. DYNAMIC GOLD PRO BANNER
-          GestureDetector(
-            onTap: () {
-              state.toggleProStatus();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isPro ? 'Pro membership deactivated.' : 'Pro membership activated!'),
-                  backgroundColor: isPro ? AppTheme.primaryLight : AppTheme.success,
-                ),
-              );
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: isPro ? AppTheme.privacyGradient : AppTheme.goldGradient,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: (isPro ? AppTheme.success : AppTheme.warning).withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    isPro ? LucideIcons.shieldCheck : LucideIcons.crown,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isPro ? 'ZeScan Pro Active' : 'Upgrade to ZeScan Pro',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isPro
-                              ? 'Thank you for supporting offline-first software!'
-                              : 'Unlimited scans, full toolkit, no ads, life unlock.',
-                          style: TextStyle(color: Colors.white.withOpacity(0.85), fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      isPro ? 'Unlocked' : '\$2.99',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 24),
-
-          // 2. PRIVACY & SECURITY AUDIT PANEL
+          // 1. PRIVACY & SECURITY AUDIT PANEL
           Text(
             '100% On-Device Verification Audit',
             style: TextStyle(
@@ -136,23 +66,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   icon: LucideIcons.database,
                   label: 'Local Database Entries',
                   value: '$count PDFs saved',
-                  statusColor: AppTheme.success,
-                ),
-                Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 24),
-                _buildAuditRow(
-                  isDark: isDark,
-                  icon: LucideIcons.activity,
-                  label: 'Network Utilization Log',
-                  value: '0 bytes transmitted',
-                  statusColor: AppTheme.success,
-                  showPulse: true,
-                ),
-                Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 24),
-                _buildAuditRow(
-                  isDark: isDark,
-                  icon: LucideIcons.lock,
-                  label: 'Account Requirement',
-                  value: 'None (anonymous-mode)',
                   statusColor: AppTheme.success,
                 ),
                 Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 24),
@@ -294,7 +207,300 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
+
+          const SizedBox(height: 24),
+
+          // 4. SUPPORT & FEEDBACK
+          Text(
+            'Support & Feedback',
+            style: TextStyle(
+              color: AppTheme.getTextSecondary(isDark),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: AppTheme.glassCard(isDark),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: Icon(LucideIcons.messageSquare, color: AppTheme.getTextSecondary(isDark), size: 18),
+                  title: Text(
+                    'Send Feedback',
+                    style: TextStyle(
+                      color: AppTheme.getTextPrimary(isDark),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Share your thoughts and suggestions',
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondary(isDark),
+                      fontSize: 11,
+                    ),
+                  ),
+                  trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
+                  onTap: () {
+                    _showFeedbackDialog(context, isDark, 'feedback');
+                  },
+                ),
+                Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 1),
+                ListTile(
+                  leading: const Icon(LucideIcons.bug, color: AppTheme.danger, size: 18),
+                  title: Text(
+                    'Report a Bug',
+                    style: TextStyle(
+                      color: AppTheme.getTextPrimary(isDark),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Help us fix issues faster',
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondary(isDark),
+                      fontSize: 11,
+                    ),
+                  ),
+                  trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
+                  onTap: () {
+                    _showFeedbackDialog(context, isDark, 'bug');
+                  },
+                ),
+                Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 1),
+                ListTile(
+                  leading: const Icon(LucideIcons.lightbulb, color: AppTheme.primaryLight, size: 18),
+                  title: Text(
+                    'Feature Request',
+                    style: TextStyle(
+                      color: AppTheme.getTextPrimary(isDark),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Suggest new features or improvements',
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondary(isDark),
+                      fontSize: 11,
+                    ),
+                  ),
+                  trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
+                  onTap: () {
+                    _showFeedbackDialog(context, isDark, 'feature');
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // 5. SHARE APP
+          Text(
+            'Share ZeScan',
+            style: TextStyle(
+              color: AppTheme.getTextSecondary(isDark),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: AppTheme.glassCard(isDark),
+            clipBehavior: Clip.antiAlias,
+            child: ListTile(
+              leading: const Icon(LucideIcons.share2, color: AppTheme.primaryLight, size: 18),
+              title: Text(
+                'Share App',
+                style: TextStyle(
+                  color: AppTheme.getTextPrimary(isDark),
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Recommend ZeScan to friends & family',
+                style: TextStyle(
+                  color: AppTheme.getTextSecondary(isDark),
+                  fontSize: 11,
+                ),
+              ),
+              trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
+              onTap: () {
+                _shareApp(context);
+              },
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _showFeedbackDialog(BuildContext context, bool isDark, String type) {
+    final TextEditingController controller = TextEditingController();
+    String title = '';
+    String hint = '';
+    IconData icon = LucideIcons.messageSquare;
+    Color iconColor = AppTheme.primaryLight;
+
+    switch (type) {
+      case 'feedback':
+        title = 'Send Feedback';
+        hint = 'Share your thoughts about ZeScan...';
+        icon = LucideIcons.messageSquare;
+        iconColor = AppTheme.primaryLight;
+        break;
+      case 'bug':
+        title = 'Report a Bug';
+        hint = 'Describe the issue you encountered...';
+        icon = LucideIcons.bug;
+        iconColor = AppTheme.danger;
+        break;
+      case 'feature':
+        title = 'Feature Request';
+        hint = 'Describe the feature you\'d like to see...';
+        icon = LucideIcons.lightbulb;
+        iconColor = AppTheme.warning;
+        break;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
+          title: Row(
+            children: [
+              Icon(icon, color: iconColor, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: TextStyle(
+                  color: AppTheme.getTextPrimary(isDark),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Your input helps us improve ZeScan!',
+                  style: TextStyle(
+                    color: AppTheme.getTextSecondary(isDark),
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: controller,
+                  autofocus: true,
+                  maxLines: 5,
+                  style: TextStyle(
+                    color: AppTheme.getTextPrimary(isDark),
+                    fontSize: 14,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: TextStyle(
+                      color: AppTheme.getTextMuted(isDark),
+                      fontSize: 13,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primaryLight,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppTheme.getTextSecondary(isDark),
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.pop(context);
+                  // TODO: Implement actual feedback submission
+                  // e.g., send to email, Firebase, or backend API
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Thank you for your ${type == 'feedback' ? 'feedback' : type == 'bug' ? 'bug report' : 'feature request'}!'),
+                      backgroundColor: AppTheme.success,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter some text'),
+                      backgroundColor: AppTheme.danger,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: iconColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _shareApp(BuildContext context) async {
+    // TODO: Implement actual share functionality using share_plus package
+    // Example implementation:
+    // await Share.share(
+    //   'Check out ZeScan - A privacy-first document scanner! 📄✨\n'
+    //   'Download: https://zescan.zeppelinlabs.digital\n\n'
+    //   '100% on-device processing, no internet required!',
+    //   subject: 'Try ZeScan Document Scanner',
+    // );
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Opening share dialog...'),
+        backgroundColor: AppTheme.success,
       ),
     );
   }

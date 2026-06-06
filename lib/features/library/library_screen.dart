@@ -402,46 +402,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ],
           ),
         ),
-
-        // Dynamic AdMob Mock Banner
-        if (!state.isProUnlocked)
-          Container(
-            height: 54,
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.getSurfaceColor(isDark),
-              border: Border.all(color: AppTheme.getBorderColor(isDark), width: 1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(LucideIcons.info, color: AppTheme.primaryLight, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  'AdMob Banner Ad Placeholder',
-                  style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 11, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: () {
-                    state.toggleProStatus();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Pro Tier Unlocked! Ads removed.'),
-                        backgroundColor: AppTheme.success,
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Remove Ads',
-                    style: TextStyle(color: AppTheme.warning, fontSize: 11, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
