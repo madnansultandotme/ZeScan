@@ -1,36 +1,53 @@
 import 'package:flutter/material.dart';
 
+/// ZeScan Brand Colors & Theme
+/// 
+/// Primary Brand Color: Bright Blue (#2196F3 / #1E88E5)
+/// This is the dominant color extracted from the ZeScan logo
+/// Used for: Primary buttons, highlights, active states
+/// 
+/// Accent Colors:
+/// - Success: Emerald Green (#10B981)
+/// - Warning: Amber (#F59E0B)  
+/// - Danger: Red (#EF4444)
+/// 
+/// Background & Surface Colors:
+/// - Dark Mode: Near-black backgrounds with subtle grays
+/// - Light Mode: Off-white with clean whites for surfaces
 class AppTheme {
   // Dark Color Palette
-  static const Color bgDark = Color(0xFF0D0D0D);
-  static const Color surfaceDark = Color(0xFF161616);
-  static const Color borderDark = Color(0xFF262626);
+  static const Color bgDark = Color(0xFF0D0D0D);        // Nearly black
+  static const Color surfaceDark = Color(0xFF161616);    // Dark gray
+  static const Color borderDark = Color(0xFF262626);     // Subtle border
   
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFA3A3A3);
-  static const Color textMuted = Color(0xFF525252);
+  static const Color textPrimary = Color(0xFFFFFFFF);           // White
+  static const Color textSecondary = Color(0xFFA3A3A3);         // Gray
+  static const Color textMuted = Color(0xFF525252);             // Muted gray
 
   // Light Color Palette
-  static const Color bgLight = Color(0xFFF8FAFC);
-  static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color borderLight = Color(0xFFE2E8F0);
+  static const Color bgLight = Color(0xFFF8FAFC);              // Off-white
+  static const Color surfaceLight = Color(0xFFFFFFFF);         // Pure white
+  static const Color borderLight = Color(0xFFE2E8F0);          // Light gray
   
-  static const Color textPrimaryLight = Color(0xFF0F172A);
-  static const Color textSecondaryLight = Color(0xFF475569);
-  static const Color textMutedLight = Color(0xFF94A3B8);
+  static const Color textPrimaryLight = Color(0xFF0F172A);     // Near black
+  static const Color textSecondaryLight = Color(0xFF475569);   // Slate gray
+  static const Color textMutedLight = Color(0xFF94A3B8);       // Light slate
   
-  // Shared Brand Colors
-  static const Color primary = Color(0xFF5B4FE8);
-  static const Color primaryLight = Color(0xFF7C72F2);
-  static const Color primaryGlow = Color(0x265B4FE8); // 15% opacity
+  // Brand Colors - Extracted from ZeScan Logo
+  // Primary: Bright Blue - The main brand color
+  static const Color primary = Color(0xFF2196F3);              // Material Blue 500
+  static const Color primaryLight = Color(0xFF42A5F5);         // Material Blue 400
+  static const Color primaryDark = Color(0xFF1E88E5);          // Material Blue 600
+  static const Color primaryGlow = Color(0x262196F3);          // 15% opacity blue
   
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color danger = Color(0xFFEF4444);
+  // Semantic Colors
+  static const Color success = Color(0xFF10B981);              // Emerald
+  static const Color warning = Color(0xFFF59E0B);              // Amber
+  static const Color danger = Color(0xFFEF4444);               // Red
 
-  // Gradients
+  // Gradients using Brand Colors
   static const LinearGradient primaryGradient = LinearGradient(
-    colors: [primaryLight, primary],
+    colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],  // Light blue to dark blue
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -42,7 +59,7 @@ class AppTheme {
   );
 
   static const LinearGradient privacyGradient = LinearGradient(
-    colors: [Color(0xFF059669), Color(0xFF0D9488)],
+    colors: [Color(0xFF059669), Color(0xFF0D9488)],  // Green gradient
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

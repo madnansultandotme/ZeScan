@@ -110,6 +110,7 @@ flutter_launcher_icons:
   image_path: "assets/images/light_mode_icon.png"
   min_sdk_android: 21
   remove_alpha_ios: true
+  # Note: Adaptive icons disabled to prevent zoom. Icon background uses brand blue #2196F3
   
 # Flutter Native Splash Configuration
 flutter_native_splash:
