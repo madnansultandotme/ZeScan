@@ -48,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           // 1. PRIVACY & SECURITY AUDIT PANEL
           Text(
-            '100% On-Device Verification Audit',
+            'Privacy & Security Verification',
             style: TextStyle(
               color: AppTheme.getTextSecondary(isDark),
               fontSize: 11,
@@ -187,7 +187,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   subtitle: Text(
-                    'Version 1.0 (Zeppelin Labs)',
+                    'Version 1.0.0',
                     style: TextStyle(
                       color: AppTheme.getTextSecondary(isDark),
                       fontSize: 11,
@@ -196,11 +196,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () {
                     showAboutDialog(
                       context: context,
-                      applicationIcon: Image.asset('assets/images/icon.png', width: 48, height: 48, errorBuilder: (c, e, s) => const Icon(LucideIcons.scan, size: 48)),
+                      applicationIcon: Image.asset(
+                        AppTheme.getIcon(isDark), 
+                        width: 48, 
+                        height: 48, 
+                        errorBuilder: (c, e, s) => const Icon(LucideIcons.scan, size: 48)
+                      ),
                       applicationName: 'ZeScan Scanner',
-                      applicationVersion: '1.0.0 (MVP)',
+                      applicationVersion: '1.0.0',
                       children: const [
-                        Text('A privacy-first, on-device document scanner and PDF toolkit developed by Zeppelin Labs. Designed to scan documents without watermarks, accounts, or internet connections.'),
+                        Text('A privacy-first document scanner and PDF toolkit. Scan documents without watermarks or accounts.'),
                       ],
                     );
                   },
@@ -493,8 +498,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final String shareText = 
           '📄 Check out ZeScan - A privacy-first document scanner!\n\n'
           '✨ Features:\n'
-          '• 100% on-device processing\n'
-          '• No internet required\n'
+          '• Secure document processing\n'
           '• PDF merge, compress & split\n'
           '• Professional document scanning\n'
           '• Completely free!\n\n'

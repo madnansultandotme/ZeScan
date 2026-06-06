@@ -61,7 +61,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               Row(
                 children: [
                   Image.asset(
-                    'assets/images/icon.png',
+                    AppTheme.getIcon(isDark),
                     height: 32,
                     errorBuilder: (context, error, stackTrace) =>
                         const Icon(LucideIcons.scan, color: AppTheme.primaryLight, size: 32),
@@ -91,7 +91,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     Icon(LucideIcons.shieldCheck, color: Colors.white, size: 14),
                     SizedBox(width: 4),
                     Text(
-                      '100% On-Device',
+                      'Privacy First',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,

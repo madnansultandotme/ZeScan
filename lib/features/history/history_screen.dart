@@ -44,7 +44,7 @@ class HistoryScreen extends StatelessWidget {
                     Icon(LucideIcons.shieldCheck, color: Colors.white, size: 14),
                     SizedBox(width: 4),
                     Text(
-                      '100% On-Device',
+                      'Privacy First',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,

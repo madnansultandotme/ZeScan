@@ -68,7 +68,7 @@ class ShareScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                '100% on-device processing complete with zero cloud footprints.',
+                'Your documents are processed securely and privately.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
               ),

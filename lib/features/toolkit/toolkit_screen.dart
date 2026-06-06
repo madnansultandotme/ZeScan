@@ -68,19 +68,20 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
 
   // 1. TOOLKIT MAIN GRID DASHBOARD
   Widget _buildDashboard(AppState state) {
+    final isDark = state.isDarkMode;
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'PDF Toolkit',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.getTextPrimary(isDark)),
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Quick on-device PDF utilities. No internet required.',
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+          Text(
+            'Quick PDF utilities for your documents.',
+            style: TextStyle(fontSize: 12, color: AppTheme.getTextSecondary(isDark)),
           ),
           const SizedBox(height: 24),
           
@@ -125,6 +126,9 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
     required IconData icon,
     required Color color,
   }) {
+    final state = AppStateProvider.of(context);
+    final isDark = state.isDarkMode;
+    
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -134,7 +138,7 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
       },
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: AppTheme.glassCard(),
+        decoration: AppTheme.glassCard(isDark),
         child: Row(
           children: [
             Container(
@@ -152,8 +156,8 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppTheme.getTextPrimary(isDark),
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -161,8 +165,8 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                   const SizedBox(height: 4),
                   Text(
                     desc,
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
+                    style: TextStyle(
+                      color: AppTheme.getTextSecondary(isDark),
                       fontSize: 12,
                     ),
                   ),
@@ -181,21 +185,24 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
   }
 
   void _showProUnlockDialog() {
+    final state = AppStateProvider.of(context);
+    final isDark = state.isDarkMode;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.surfaceDark,
+        backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(LucideIcons.crown, color: AppTheme.warning),
-            SizedBox(width: 8),
-            Text('Go Pro Feature', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            const Icon(LucideIcons.crown, color: AppTheme.warning),
+            const SizedBox(width: 8),
+            Text('Go Pro Feature', style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Managing, deleting, and rotating pages of existing PDFs requires the Pro Lifetime Unlock (\$2.99). Upgrade now!',
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+          style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -222,9 +229,10 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
   // 2. MERGE PDF UTILITY
   Widget _buildMergeTool(AppState state) {
     final docs = state.documents;
+    final isDark = state.isDarkMode;
     
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: isDark ? AppTheme.bgDark : AppTheme.bgLight,
       appBar: AppBar(
         title: const Text('Merge Documents'),
         leading: IconButton(
@@ -237,9 +245,9 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Select PDFs to Merge',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -260,8 +268,8 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                       });
                     },
                     secondary: const Icon(LucideIcons.fileText, color: AppTheme.primaryLight),
-                    title: Text(doc.name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                    subtitle: Text('${doc.pages.length} pgs • ${doc.sizeInMb} MB', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
+                    title: Text(doc.name, style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: Text('${doc.pages.length} pgs • ${doc.sizeInMb} MB', style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 10)),
                     activeColor: AppTheme.primary,
                     checkColor: Colors.white,
                     contentPadding: EdgeInsets.zero,
@@ -271,17 +279,17 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
             ),
             const SizedBox(height: 12),
             // Custom Name Input
-            const Text('New File Name', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+            Text('New File Name', style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 11)),
             const SizedBox(height: 4),
             Container(
               decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
+                color: isDark ? AppTheme.surfaceDark : Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.borderDark),
+                border: Border.all(color: isDark ? AppTheme.borderDark : AppTheme.borderLight),
               ),
               child: TextField(
                 controller: _toolNameController,
-                style: const TextStyle(color: Colors.white, fontSize: 13),
+                style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontSize: 13),
                 decoration: const InputDecoration(
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -328,7 +336,7 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
-                  disabledBackgroundColor: AppTheme.surfaceDark,
+                  disabledBackgroundColor: isDark ? AppTheme.surfaceDark : Colors.grey.shade300,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 child: const Text('Merge Selected files', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -343,13 +351,14 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
   // 3. COMPRESS PDF UTILITY
   Widget _buildCompressTool(AppState state) {
     final docs = state.documents;
+    final isDark = state.isDarkMode;
     Document? selectedDoc;
     if (_selectedCompressId != null) {
       selectedDoc = docs.firstWhere((d) => d.id == _selectedCompressId);
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: isDark ? AppTheme.bgDark : AppTheme.bgLight,
       appBar: AppBar(
         title: const Text('Compress PDF'),
         leading: IconButton(
@@ -362,24 +371,24 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Select PDF to Compress',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: _selectedCompressId,
-              dropdownColor: AppTheme.surfaceDark,
+              dropdownColor: isDark ? AppTheme.surfaceDark : Colors.white,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppTheme.surfaceDark,
-                enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.borderDark), borderRadius: BorderRadius.circular(12)),
+                fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: isDark ? AppTheme.borderDark : AppTheme.borderLight), borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.primaryLight), borderRadius: BorderRadius.circular(12)),
               ),
               items: docs.map((doc) {
                 return DropdownMenuItem<String>(
                   value: doc.id,
-                  child: Text('${doc.name} (${doc.sizeInMb} MB)', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  child: Text('${doc.name} (${doc.sizeInMb} MB)', style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontSize: 13)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -393,7 +402,7 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
               const SizedBox(height: 30),
               Text(
                 'Compression Quality: ${(_compressSliderVal * 100).toInt()}%',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontWeight: FontWeight.bold, fontSize: 14),
               ),
               const SizedBox(height: 8),
               Slider(
@@ -401,7 +410,7 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                 min: 0.1,
                 max: 0.9,
                 activeColor: AppTheme.success,
-                inactiveColor: AppTheme.borderDark,
+                inactiveColor: isDark ? AppTheme.borderDark : AppTheme.borderLight,
                 onChanged: (val) {
                   setState(() {
                     _compressSliderVal = val;
@@ -411,22 +420,22 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: AppTheme.glassCard(),
+                decoration: AppTheme.glassCard(isDark),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Original Size', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
-                        Text('${selectedDoc.sizeInMb} MB', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text('Original Size', style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 11)),
+                        Text('${selectedDoc.sizeInMb} MB', style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontWeight: FontWeight.bold, fontSize: 14)),
                       ],
                     ),
                     const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Estimated Size', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+                        Text('Estimated Size', style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 11)),
                         Text(
                           '${(selectedDoc.sizeInMb * _compressSliderVal).toStringAsFixed(2)} MB',
                           style: const TextStyle(color: AppTheme.success, fontWeight: FontWeight.bold, fontSize: 14),
@@ -487,13 +496,14 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
   // 4. SPLIT PDF UTILITY
   Widget _buildSplitTool(AppState state) {
     final docs = state.documents;
+    final isDark = state.isDarkMode;
     Document? selectedDoc;
     if (_selectedSplitId != null) {
       selectedDoc = docs.firstWhere((d) => d.id == _selectedSplitId);
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.bgDark,
+      backgroundColor: isDark ? AppTheme.bgDark : AppTheme.bgLight,
       appBar: AppBar(
         title: const Text('Split Document'),
         leading: IconButton(
@@ -506,23 +516,23 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Select PDF to Split',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+              style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 12, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               value: _selectedSplitId,
-              dropdownColor: AppTheme.surfaceDark,
+              dropdownColor: isDark ? AppTheme.surfaceDark : Colors.white,
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppTheme.surfaceDark,
-                enabledBorder: OutlineInputBorder(borderSide: const BorderSide(color: AppTheme.borderDark), borderRadius: BorderRadius.circular(12)),
+                fillColor: isDark ? AppTheme.surfaceDark : Colors.white,
+                enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: isDark ? AppTheme.borderDark : AppTheme.borderLight), borderRadius: BorderRadius.circular(12)),
               ),
               items: docs.map((doc) {
                 return DropdownMenuItem<String>(
                   value: doc.id,
-                  child: Text('${doc.name} (${doc.pages.length} pages)', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  child: Text('${doc.name} (${doc.pages.length} pages)', style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontSize: 13)),
                 );
               }).toList(),
               onChanged: (val) {
@@ -535,9 +545,9 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
             
             if (selectedDoc != null) ...[
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Select Pages to Extract',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
+                style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 11, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Expanded(
@@ -563,15 +573,15 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isChecked ? AppTheme.primaryGlow : AppTheme.surfaceDark,
-                          border: Border.all(color: isChecked ? AppTheme.primaryLight : AppTheme.borderDark, width: 1.5),
+                          color: isChecked ? AppTheme.primaryGlow : (isDark ? AppTheme.surfaceDark : Colors.white),
+                          border: Border.all(color: isChecked ? AppTheme.primaryLight : (isDark ? AppTheme.borderDark : AppTheme.borderLight), width: 1.5),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text('${idx + 1}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              Text('${idx + 1}', style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontWeight: FontWeight.bold)),
                               const SizedBox(height: 2),
                               Icon(
                                 isChecked ? LucideIcons.check : LucideIcons.plus,
@@ -587,17 +597,17 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text('New File Name', style: TextStyle(color: AppTheme.textSecondary, fontSize: 11)),
+              Text('New File Name', style: TextStyle(color: AppTheme.getTextSecondary(isDark), fontSize: 11)),
               const SizedBox(height: 4),
               Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceDark,
+                  color: isDark ? AppTheme.surfaceDark : Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.borderDark),
+                  border: Border.all(color: isDark ? AppTheme.borderDark : AppTheme.borderLight),
                 ),
                 child: TextField(
                   controller: _toolNameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: TextStyle(color: AppTheme.getTextPrimary(isDark), fontSize: 13),
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -642,7 +652,7 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
-                    disabledBackgroundColor: AppTheme.surfaceDark,
+                    disabledBackgroundColor: isDark ? AppTheme.surfaceDark : Colors.grey.shade300,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                   ),
                   child: const Text('Extract Pages', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),

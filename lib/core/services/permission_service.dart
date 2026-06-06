@@ -32,7 +32,7 @@ class PermissionService {
       permission,
       title: 'Photo Library Access',
       rationale:
-          'ZeScan needs access to your photos to import images for PDF conversion. Nothing is uploaded — everything stays on-device.',
+          'ZeScan needs access to your photos to import images for PDF conversion. Your privacy is protected.',
       icon: Icons.photo_library_outlined,
     );
   }

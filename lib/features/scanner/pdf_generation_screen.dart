@@ -204,7 +204,7 @@ class _PdfGenerationScreenState extends State<PdfGenerationScreen>
                           Text(
                             _isComplete
                                 ? 'Preparing to share...'
-                                : 'Converting on-device... 100% Offline & Private',
+                                : 'Converting your document to PDF...',
                             style: const TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 14,

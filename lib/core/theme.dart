@@ -55,6 +55,40 @@ class AppTheme {
   static Color getTextSecondary(bool isDark) => isDark ? textSecondary : textSecondaryLight;
   static Color getTextMuted(bool isDark) => isDark ? textMuted : textMutedLight;
 
+  // Icon Color Helpers
+  static Color getIconPrimary(bool isDark) => isDark ? textPrimary : textPrimaryLight;
+  static Color getIconSecondary(bool isDark) => isDark ? textSecondary : textSecondaryLight;
+  static Color getIconMuted(bool isDark) => isDark ? textMuted : textMutedLight;
+  
+  /// Icon Asset Helpers - Returns the appropriate icon path based on theme
+  /// 
+  /// Usage Examples:
+  /// ```dart
+  /// // Get logo based on theme
+  /// Image.asset(AppTheme.getLogo(isDark))
+  /// 
+  /// // Get icon based on theme
+  /// Image.asset(AppTheme.getIcon(isDark))
+  /// 
+  /// // Get custom icon
+  /// Image.asset(AppTheme.getIconAsset(isDark, 'custom_icon'))
+  /// // Looks for: assets/images/light_mode_custom_icon.png (light theme)
+  /// //         or assets/images/dark_mode_custom_icon.png (dark theme)
+  /// 
+  /// // Icon colors
+  /// Icon(Icons.home, color: AppTheme.getIconPrimary(isDark))
+  /// Icon(Icons.settings, color: AppTheme.getIconSecondary(isDark))
+  /// Icon(Icons.info, color: AppTheme.getIconMuted(isDark))
+  /// ```
+  static String getIconAsset(bool isDark, String iconName) {
+    return isDark 
+        ? 'assets/images/dark_mode_$iconName.png'
+        : 'assets/images/light_mode_$iconName.png';
+  }
+  
+  static String getLogo(bool isDark) => getIconAsset(isDark, 'logo');
+  static String getIcon(bool isDark) => getIconAsset(isDark, 'icon');
+
   // Custom Glassmorphic Card decoration based on active theme
   static BoxDecoration glassCard([bool isDark = true, Color? borderOverride]) {
     return BoxDecoration(

@@ -29,7 +29,6 @@ class PdfResult {
 
 /// Pure Dart PDF generation service. Reads image files from disk, composes
 /// them into a multi-page A4 PDF, and saves to the app's documents directory.
-/// All processing is 100% on-device with zero network calls.
 class PdfService {
   /// Generate a PDF from a list of image file paths.
   ///
