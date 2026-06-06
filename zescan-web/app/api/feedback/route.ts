@@ -42,7 +42,10 @@ export async function POST(request: NextRequest) {
 
     // Send email notification
     try {
-      await sendFeedbackEmail(feedback);
+      await sendFeedbackEmail({
+        ...feedback,
+        feedbackId: feedback.id,
+      });
       console.log('✅ Email notification sent for feedback:', feedback.id);
     } catch (emailError) {
       console.error('❌ Failed to send email notification:', emailError);
