@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/state/app_state_provider.dart';
+import 'feedback_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -251,7 +252,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
                   onTap: () {
-                    _showFeedbackDialog(context, isDark, 'feedback');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedbackScreen(type: 'feedback'),
+                      ),
+                    );
                   },
                 ),
                 Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 1),
@@ -274,7 +280,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
                   onTap: () {
-                    _showFeedbackDialog(context, isDark, 'bug');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedbackScreen(type: 'bug_report'),
+                      ),
+                    );
                   },
                 ),
                 Divider(color: isDark ? AppTheme.borderDark : AppTheme.borderLight, height: 1),
@@ -297,7 +308,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   trailing: const Icon(LucideIcons.arrowRight, color: AppTheme.textMuted, size: 14),
                   onTap: () {
-                    _showFeedbackDialog(context, isDark, 'feature');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedbackScreen(type: 'feature_request'),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -345,151 +361,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showFeedbackDialog(BuildContext context, bool isDark, String type) {
-    final TextEditingController controller = TextEditingController();
-    String title = '';
-    String hint = '';
-    IconData icon = LucideIcons.messageSquare;
-    Color iconColor = AppTheme.primaryLight;
-
-    switch (type) {
-      case 'feedback':
-        title = 'Send Feedback';
-        hint = 'Share your thoughts about ZeScan...';
-        icon = LucideIcons.messageSquare;
-        iconColor = AppTheme.primaryLight;
-        break;
-      case 'bug':
-        title = 'Report a Bug';
-        hint = 'Describe the issue you encountered...';
-        icon = LucideIcons.bug;
-        iconColor = AppTheme.danger;
-        break;
-      case 'feature':
-        title = 'Feature Request';
-        hint = 'Describe the feature you\'d like to see...';
-        icon = LucideIcons.lightbulb;
-        iconColor = AppTheme.warning;
-        break;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: isDark ? AppTheme.surfaceDark : Colors.white,
-          title: Row(
-            children: [
-              Icon(icon, color: iconColor, size: 24),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: TextStyle(
-                  color: AppTheme.getTextPrimary(isDark),
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Your input helps us improve ZeScan!',
-                  style: TextStyle(
-                    color: AppTheme.getTextSecondary(isDark),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  maxLines: 5,
-                  style: TextStyle(
-                    color: AppTheme.getTextPrimary(isDark),
-                    fontSize: 14,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: TextStyle(
-                      color: AppTheme.getTextMuted(isDark),
-                      fontSize: 13,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: isDark ? AppTheme.borderDark : AppTheme.borderLight,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        color: AppTheme.primaryLight,
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: AppTheme.getTextSecondary(isDark),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (controller.text.trim().isNotEmpty) {
-                  Navigator.pop(context);
-                  // TODO: Implement actual feedback submission
-                  // e.g., send to email, Firebase, or backend API
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Thank you for your ${type == 'feedback' ? 'feedback' : type == 'bug' ? 'bug report' : 'feature request'}!'),
-                      backgroundColor: AppTheme.success,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter some text'),
-                      backgroundColor: AppTheme.danger,
-                    ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: iconColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Submit'),
-            ),
-          ],
-        );
-      },
     );
   }
 
