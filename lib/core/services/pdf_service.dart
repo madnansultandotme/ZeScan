@@ -3,6 +3,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pdfx/pdfx.dart' as pdfx;
 
 /// Quality presets for PDF image compression.
 enum PdfQuality {
@@ -182,5 +183,246 @@ class PdfService {
       case PdfQuality.high:
         return 0.9;  // ~90% of original size
     }
+  }
+
+  /// Merge multiple PDF files into one
+  static Future<PdfResult> mergePdfs({
+    required List<String> pdfPaths,
+    required String fileName,
+    void Function(double progress)? onProgress,
+  }) async {
+    debugPrint('PdfService: Starting PDF merge with ${pdfPaths.length} files');
+    
+    final pdf = pw.Document();
+    int totalPages = 0;
+    int processedPages = 0;
+
+    // First pass: count total pages
+    for (final pdfPath in pdfPaths) {
+      try {
+        final file = File(pdfPath);
+        if (await file.exists()) {
+          final doc = await pdfx.PdfDocument.openFile(pdfPath);
+          totalPages += doc.pagesCount;
+        }
+      } catch (e) {
+        debugPrint('PdfService: Error reading PDF $pdfPath: $e');
+      }
+    }
+
+    onProgress?.call(0.0);
+
+    // Second pass: merge all pages
+    for (final pdfPath in pdfPaths) {
+      try {
+        final file = File(pdfPath);
+        if (!await file.exists()) continue;
+
+        final sourceDoc = await pdfx.PdfDocument.openFile(pdfPath);
+        
+        for (int i = 1; i <= sourceDoc.pagesCount; i++) {
+          final page = await sourceDoc.getPage(i);
+          final pageImage = await page.render(
+            width: page.width.toDouble() * 2,
+            height: page.height.toDouble() * 2,
+            format: pdfx.PdfPageImageFormat.jpeg,
+            backgroundColor: '#FFFFFF',
+          );
+          
+          if (pageImage != null) {
+            final pw.MemoryImage image = pw.MemoryImage(pageImage.bytes);
+            
+            pdf.addPage(
+              pw.Page(
+                pageFormat: PdfPageFormat.a4,
+                margin: const pw.EdgeInsets.all(0),
+                build: (pw.Context context) {
+                  return pw.Center(
+                    child: pw.Image(image, fit: pw.BoxFit.contain),
+                  );
+                },
+              ),
+            );
+            
+            processedPages++;
+            onProgress?.call(processedPages / totalPages);
+          }
+          
+          await page.close();
+        }
+      } catch (e) {
+        debugPrint('PdfService: Error merging PDF $pdfPath: $e');
+      }
+    }
+
+    // Save merged PDF
+    final outputDir = await getApplicationDocumentsDirectory();
+    final pdfDir = Directory('${outputDir.path}/ZeScan_PDFs');
+    if (!await pdfDir.exists()) {
+      await pdfDir.create(recursive: true);
+    }
+
+    final sanitizedName = fileName.replaceAll(RegExp(r'[^\w\-.]'), '_');
+    final outputPath = '${pdfDir.path}/$sanitizedName.pdf';
+    final outputFile = File(outputPath);
+    
+    final Uint8List pdfBytes = await pdf.save();
+    await outputFile.writeAsBytes(pdfBytes);
+
+    debugPrint('PdfService: Merged PDF saved: $outputPath');
+
+    return PdfResult(
+      filePath: outputPath,
+      fileSizeBytes: pdfBytes.length,
+      pageCount: processedPages,
+    );
+  }
+
+  /// Compress a PDF by re-encoding at lower quality
+  static Future<PdfResult> compressPdf({
+    required String sourcePdfPath,
+    required String fileName,
+    required double quality, // 0.0 to 1.0
+    void Function(double progress)? onProgress,
+  }) async {
+    debugPrint('PdfService: Starting PDF compression at ${(quality * 100).toInt()}% quality');
+    
+    final pdf = pw.Document();
+    final file = File(sourcePdfPath);
+    
+    if (!await file.exists()) {
+      throw Exception('Source PDF not found');
+    }
+
+    final sourceDoc = await pdfx.PdfDocument.openFile(sourcePdfPath);
+    
+    onProgress?.call(0.0);
+
+    for (int i = 1; i <= sourceDoc.pagesCount; i++) {
+      final page = await sourceDoc.getPage(i);
+      final pageImage = await page.render(
+        width: page.width.toDouble() * quality * 2,
+        height: page.height.toDouble() * quality * 2,
+        format: pdfx.PdfPageImageFormat.jpeg,
+        backgroundColor: '#FFFFFF',
+      );
+      
+      if (pageImage != null) {
+        final pw.MemoryImage image = pw.MemoryImage(pageImage.bytes);
+        
+        pdf.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            margin: const pw.EdgeInsets.all(0),
+            build: (pw.Context context) {
+              return pw.Center(
+                child: pw.Image(image, fit: pw.BoxFit.contain),
+              );
+            },
+          ),
+        );
+      }
+      
+      await page.close();
+      onProgress?.call(i / sourceDoc.pagesCount);
+    }
+
+    // Save compressed PDF
+    final outputDir = await getApplicationDocumentsDirectory();
+    final pdfDir = Directory('${outputDir.path}/ZeScan_PDFs');
+    if (!await pdfDir.exists()) {
+      await pdfDir.create(recursive: true);
+    }
+
+    final sanitizedName = fileName.replaceAll(RegExp(r'[^\w\-.]'), '_');
+    final outputPath = '${pdfDir.path}/$sanitizedName.pdf';
+    final outputFile = File(outputPath);
+    
+    final Uint8List pdfBytes = await pdf.save();
+    await outputFile.writeAsBytes(pdfBytes);
+
+    debugPrint('PdfService: Compressed PDF saved: $outputPath');
+
+    return PdfResult(
+      filePath: outputPath,
+      fileSizeBytes: pdfBytes.length,
+      pageCount: sourceDoc.pagesCount,
+    );
+  }
+
+  /// Split a PDF by extracting specific pages
+  static Future<PdfResult> splitPdf({
+    required String sourcePdfPath,
+    required String fileName,
+    required List<int> pageIndices, // 0-based indices
+    void Function(double progress)? onProgress,
+  }) async {
+    debugPrint('PdfService: Starting PDF split, extracting ${pageIndices.length} pages');
+    
+    final pdf = pw.Document();
+    final file = File(sourcePdfPath);
+    
+    if (!await file.exists()) {
+      throw Exception('Source PDF not found');
+    }
+
+    final sourceDoc = await pdfx.PdfDocument.openFile(sourcePdfPath);
+    
+    onProgress?.call(0.0);
+
+    // Sort and validate indices
+    final validIndices = pageIndices.where((i) => i >= 0 && i < sourceDoc.pagesCount).toList();
+    
+    for (int idx = 0; idx < validIndices.length; idx++) {
+      final pageNum = validIndices[idx] + 1; // Convert to 1-based
+      final page = await sourceDoc.getPage(pageNum);
+      final pageImage = await page.render(
+        width: page.width.toDouble() * 2,
+        height: page.height.toDouble() * 2,
+        format: pdfx.PdfPageImageFormat.jpeg,
+        backgroundColor: '#FFFFFF',
+      );
+      
+      if (pageImage != null) {
+        final pw.MemoryImage image = pw.MemoryImage(pageImage.bytes);
+        
+        pdf.addPage(
+          pw.Page(
+            pageFormat: PdfPageFormat.a4,
+            margin: const pw.EdgeInsets.all(0),
+            build: (pw.Context context) {
+              return pw.Center(
+                child: pw.Image(image, fit: pw.BoxFit.contain),
+              );
+            },
+          ),
+        );
+      }
+      
+      await page.close();
+      onProgress?.call((idx + 1) / validIndices.length);
+    }
+
+    // Save split PDF
+    final outputDir = await getApplicationDocumentsDirectory();
+    final pdfDir = Directory('${outputDir.path}/ZeScan_PDFs');
+    if (!await pdfDir.exists()) {
+      await pdfDir.create(recursive: true);
+    }
+
+    final sanitizedName = fileName.replaceAll(RegExp(r'[^\w\-.]'), '_');
+    final outputPath = '${pdfDir.path}/$sanitizedName.pdf';
+    final outputFile = File(outputPath);
+    
+    final Uint8List pdfBytes = await pdf.save();
+    await outputFile.writeAsBytes(pdfBytes);
+
+    debugPrint('PdfService: Split PDF saved: $outputPath');
+
+    return PdfResult(
+      filePath: outputPath,
+      fileSizeBytes: pdfBytes.length,
+      pageCount: validIndices.length,
+    );
   }
 }

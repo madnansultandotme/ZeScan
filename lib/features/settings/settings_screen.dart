@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/state/app_state_provider.dart';
 
@@ -488,21 +489,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _shareApp(BuildContext context) async {
-    // TODO: Implement actual share functionality using share_plus package
-    // Example implementation:
-    // await Share.share(
-    //   'Check out ZeScan - A privacy-first document scanner! 📄✨\n'
-    //   'Download: https://zescan.zeppelinlabs.digital\n\n'
-    //   '100% on-device processing, no internet required!',
-    //   subject: 'Try ZeScan Document Scanner',
-    // );
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening share dialog...'),
-        backgroundColor: AppTheme.success,
-      ),
-    );
+    try {
+      final String shareText = 
+          '📄 Check out ZeScan - A privacy-first document scanner!\n\n'
+          '✨ Features:\n'
+          '• 100% on-device processing\n'
+          '• No internet required\n'
+          '• PDF merge, compress & split\n'
+          '• Professional document scanning\n'
+          '• Completely free!\n\n'
+          'Download: https://play.google.com/store/apps/details?id=com.zeppelinlabs.digital.zescan';
+      
+      await Share.share(
+        shareText,
+        subject: 'Try ZeScan Document Scanner',
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Share failed: $e'),
+          backgroundColor: AppTheme.danger,
+        ),
+      );
+    }
   }
 
   Widget _buildAuditRow({

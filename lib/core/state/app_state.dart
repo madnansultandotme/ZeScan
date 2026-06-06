@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/document.dart';
 import '../services/file_manager_service.dart';
+import '../services/pdf_service.dart';
 
 class AppState extends ChangeNotifier {
   final _uuid = const Uuid();
@@ -294,65 +295,110 @@ class AppState extends ChangeNotifier {
     return newDoc;
   }
 
-  // Simulated Toolkit Operations
-  Document performMerge(List<Document> docsToMerge, String name) {
-    final List<String> combinedPages = [];
-    double combinedSize = 0;
-    
-    for (var doc in docsToMerge) {
-      combinedPages.addAll(doc.pages);
-      combinedSize += doc.sizeInMb;
-    }
+  // Toolkit Operations with actual PDF manipulation
+  Future<Document> performMerge(List<Document> docsToMerge, String name) async {
+    try {
+      // Get PDF paths from documents
+      final pdfPaths = docsToMerge
+          .where((doc) => doc.pdfPath != null && doc.pdfPath!.isNotEmpty)
+          .map((doc) => doc.pdfPath!)
+          .toList();
 
-    final newDoc = Document(
-      id: _uuid.v4(),
-      name: name.isEmpty ? 'Merged_Document' : name,
-      createdAt: DateTime.now(),
-      pages: combinedPages,
-      sizeInMb: double.parse((combinedSize * 0.9).toStringAsFixed(2)), // simulated 10% structural optimization merge size
-      folderId: 'all',
-    );
-    _documents.add(newDoc);
-    _saveDocuments();
-    notifyListeners();
-    return newDoc;
-  }
-
-  Document performCompress(Document doc, double targetQualityMultiplier) {
-    // Quality compression simulation
-    final compressedSize = double.parse((doc.sizeInMb * targetQualityMultiplier).toStringAsFixed(2));
-    final newDoc = doc.copyWith(
-      id: _uuid.v4(),
-      name: '${doc.name}_compressed',
-      createdAt: DateTime.now(),
-      sizeInMb: compressedSize,
-    );
-    _documents.add(newDoc);
-    _saveDocuments();
-    notifyListeners();
-    return newDoc;
-  }
-
-  Document performSplit(Document doc, List<int> selectedPageIndices, String name) {
-    final List<String> splitPages = [];
-    for (var index in selectedPageIndices) {
-      if (index >= 0 && index < doc.pages.length) {
-        splitPages.add(doc.pages[index]);
+      if (pdfPaths.isEmpty) {
+        throw Exception('No valid PDFs to merge');
       }
+
+      // Perform actual PDF merge
+      final result = await PdfService.mergePdfs(
+        pdfPaths: pdfPaths,
+        fileName: name.isEmpty ? 'Merged_Document' : name,
+      );
+
+      // Create new document with actual PDF
+      final newDoc = Document(
+        id: _uuid.v4(),
+        name: name.isEmpty ? 'Merged_Document' : name,
+        createdAt: DateTime.now(),
+        pages: List.generate(result.pageCount, (i) => 'page_$i'),
+        sizeInMb: result.fileSizeMb,
+        folderId: 'all',
+        pdfPath: result.filePath,
+      );
+
+      _documents.add(newDoc);
+      _saveDocuments();
+      notifyListeners();
+      return newDoc;
+    } catch (e) {
+      debugPrint('AppState: Merge failed: $e');
+      rethrow;
     }
-    
-    final newDoc = Document(
-      id: _uuid.v4(),
-      name: name.isEmpty ? '${doc.name}_split' : name,
-      createdAt: DateTime.now(),
-      pages: splitPages,
-      sizeInMb: double.parse((doc.sizeInMb * (splitPages.length / doc.pages.length)).toStringAsFixed(2)),
-      folderId: doc.folderId,
-    );
-    _documents.add(newDoc);
-    _saveDocuments();
-    notifyListeners();
-    return newDoc;
+  }
+
+  Future<Document> performCompress(Document doc, double targetQualityMultiplier) async {
+    try {
+      if (doc.pdfPath == null || doc.pdfPath!.isEmpty) {
+        throw Exception('No PDF file to compress');
+      }
+
+      // Perform actual PDF compression
+      final result = await PdfService.compressPdf(
+        sourcePdfPath: doc.pdfPath!,
+        fileName: '${doc.name}_compressed',
+        quality: targetQualityMultiplier,
+      );
+
+      // Create new document with compressed PDF
+      final newDoc = doc.copyWith(
+        id: _uuid.v4(),
+        name: '${doc.name}_compressed',
+        createdAt: DateTime.now(),
+        sizeInMb: result.fileSizeMb,
+        pdfPath: result.filePath,
+      );
+
+      _documents.add(newDoc);
+      _saveDocuments();
+      notifyListeners();
+      return newDoc;
+    } catch (e) {
+      debugPrint('AppState: Compress failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<Document> performSplit(Document doc, List<int> selectedPageIndices, String name) async {
+    try {
+      if (doc.pdfPath == null || doc.pdfPath!.isEmpty) {
+        throw Exception('No PDF file to split');
+      }
+
+      // Perform actual PDF split
+      final result = await PdfService.splitPdf(
+        sourcePdfPath: doc.pdfPath!,
+        fileName: name.isEmpty ? '${doc.name}_split' : name,
+        pageIndices: selectedPageIndices,
+      );
+
+      // Create new document with split PDF
+      final newDoc = Document(
+        id: _uuid.v4(),
+        name: name.isEmpty ? '${doc.name}_split' : name,
+        createdAt: DateTime.now(),
+        pages: List.generate(result.pageCount, (i) => 'page_$i'),
+        sizeInMb: result.fileSizeMb,
+        folderId: doc.folderId,
+        pdfPath: result.filePath,
+      );
+
+      _documents.add(newDoc);
+      _saveDocuments();
+      notifyListeners();
+      return newDoc;
+    } catch (e) {
+      debugPrint('AppState: Split failed: $e');
+      rethrow;
+    }
   }
 
   void performRotatePages(String docId, List<int> pageIndices) {

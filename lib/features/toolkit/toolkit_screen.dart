@@ -85,19 +85,16 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
           const SizedBox(height: 24),
           
           Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.1,
+            child: ListView(
               children: [
                 _buildToolCard(
                   id: 'merge',
                   title: 'Merge PDFs',
-                  desc: 'Combine files in sequence',
+                  desc: 'Combine multiple files into one document',
                   icon: LucideIcons.merge,
                   color: AppTheme.primaryLight,
                 ),
+                const SizedBox(height: 12),
                 _buildToolCard(
                   id: 'compress',
                   title: 'Compress PDF',
@@ -105,20 +102,13 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                   icon: LucideIcons.minimize2,
                   color: AppTheme.success,
                 ),
+                const SizedBox(height: 12),
                 _buildToolCard(
                   id: 'split',
                   title: 'Split PDF',
-                  desc: 'Extract specific page range',
+                  desc: 'Extract specific pages from document',
                   icon: LucideIcons.split,
                   color: AppTheme.warning,
-                ),
-                _buildToolCard(
-                  id: 'manage',
-                  title: 'Manage Pages',
-                  desc: 'Rotate or delete pages',
-                  icon: LucideIcons.sliders,
-                  color: AppTheme.danger,
-                  isProFeature: !state.isProUnlocked,
                 ),
               ],
             ),
@@ -134,54 +124,55 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
     required String desc,
     required IconData icon,
     required Color color,
-    bool isProFeature = false,
   }) {
     return GestureDetector(
       onTap: () {
-        if (isProFeature) {
-          _showProUnlockDialog();
-          return;
-        }
         setState(() {
           _activeToolId = id;
           _toolNameController.text = '${title.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch ~/ 10000}';
         });
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: AppTheme.glassCard(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                if (isProFeature)
-                  const Icon(LucideIcons.crown, color: AppTheme.warning, size: 16),
-              ],
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 28),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  desc,
-                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 10),
-                ),
-              ],
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    desc,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              LucideIcons.chevronRight,
+              color: AppTheme.textMuted,
+              size: 20,
             ),
           ],
         ),
@@ -304,13 +295,36 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
               child: ElevatedButton(
                 onPressed: _selectedMergeIds.length < 2
                     ? null
-                    : () {
+                    : () async {
                         final toMerge = state.documents.where((d) => _selectedMergeIds.contains(d.id)).toList();
-                        final merged = state.performMerge(toMerge, _toolNameController.text.trim());
-                        _resetToolStates();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Merged into ${merged.name}!'), backgroundColor: AppTheme.success),
-                        );
+                        
+                        try {
+                          // Show loading
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(
+                              child: CircularProgressIndicator(color: AppTheme.primaryLight),
+                            ),
+                          );
+                          
+                          final merged = await state.performMerge(toMerge, _toolNameController.text.trim());
+                          
+                          if (mounted) {
+                            Navigator.pop(context); // Close loading
+                            _resetToolStates();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Merged into ${merged.name}!'), backgroundColor: AppTheme.success),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            Navigator.pop(context); // Close loading
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Merge failed: $e'), backgroundColor: AppTheme.danger),
+                            );
+                          }
+                        }
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primary,
@@ -427,12 +441,34 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: () {
-                    final compressed = state.performCompress(selectedDoc!, _compressSliderVal);
-                    _resetToolStates();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Compressed PDF saved as ${compressed.name}!'), backgroundColor: AppTheme.success),
-                    );
+                  onPressed: () async {
+                    try {
+                      // Show loading
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (context) => const Center(
+                          child: CircularProgressIndicator(color: AppTheme.success),
+                        ),
+                      );
+                      
+                      final compressed = await state.performCompress(selectedDoc!, _compressSliderVal);
+                      
+                      if (mounted) {
+                        Navigator.pop(context); // Close loading
+                        _resetToolStates();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Compressed PDF saved as ${compressed.name}!'), backgroundColor: AppTheme.success),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        Navigator.pop(context); // Close loading
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Compression failed: $e'), backgroundColor: AppTheme.danger),
+                        );
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.success,
@@ -575,12 +611,34 @@ class _ToolkitScreenState extends State<ToolkitScreen> {
                 child: ElevatedButton(
                   onPressed: _selectedSplitPages.isEmpty
                       ? null
-                      : () {
-                          final splitDoc = state.performSplit(selectedDoc!, _selectedSplitPages, _toolNameController.text.trim());
-                          _resetToolStates();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Extracted ${splitDoc.pages.length} pages into ${splitDoc.name}!'), backgroundColor: AppTheme.success),
-                          );
+                      : () async {
+                          try {
+                            // Show loading
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => const Center(
+                                child: CircularProgressIndicator(color: AppTheme.primaryLight),
+                              ),
+                            );
+                            
+                            final splitDoc = await state.performSplit(selectedDoc!, _selectedSplitPages, _toolNameController.text.trim());
+                            
+                            if (mounted) {
+                              Navigator.pop(context); // Close loading
+                              _resetToolStates();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Extracted ${splitDoc.pages.length} pages into ${splitDoc.name}!'), backgroundColor: AppTheme.success),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              Navigator.pop(context); // Close loading
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Split failed: $e'), backgroundColor: AppTheme.danger),
+                              );
+                            }
+                          }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
