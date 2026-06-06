@@ -6,8 +6,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/theme.dart';
 import '../../core/state/app_state_provider.dart';
 import '../../core/services/permission_service.dart';
+import '../../core/services/document_scanner_service.dart';
 import 'scanner_screen.dart';
 import 'export_sheet.dart';
+import 'image_editor_screen.dart';
 
 class PreviewScreen extends StatefulWidget {
   const PreviewScreen({super.key});
@@ -39,15 +41,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
               ),
               const Divider(color: AppTheme.borderDark, height: 24),
               ListTile(
+                leading: const Icon(LucideIcons.crop, color: AppTheme.primaryLight),
+                title: const Text('Edit (Crop & Rotate)', style: TextStyle(color: Colors.white)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _openImageEditor(context, index, path);
+                },
+              ),
+              ListTile(
                 leading: const Icon(LucideIcons.camera, color: AppTheme.textSecondary),
                 title: const Text('Retake Page (Camera)', style: TextStyle(color: Colors.white)),
                 onTap: () {
-                  Navigator.pop(context);
-                  // Navigate back to scanner for retake
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ScannerScreen()),
-                  );
+                  Navigator.pop(context); // Close bottom sheet
+                  Navigator.pop(context); // Go back to scanner
                 },
               ),
               ListTile(
@@ -97,6 +103,42 @@ class _PreviewScreenState extends State<PreviewScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Open image editor for manual crop and rotate
+  void _openImageEditor(BuildContext context, int index, String imagePath) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageEditorScreen(
+          imagePath: imagePath,
+          onSave: (editedPath) async {
+            final state = AppStateProvider.of(context);
+
+            // Replace the page in queue with edited version (no enhancement)
+            state.replacePageInScanQueue(index, editedPath);
+
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Page updated!'),
+                duration: Duration(seconds: 1),
+                backgroundColor: AppTheme.success,
+              ),
+            );
+
+            // Close editor
+            Navigator.pop(context);
+
+            // Refresh the view
+            setState(() {
+              _selectedPageIndex = index;
+            });
+          },
+        ),
+      ),
     );
   }
 
@@ -152,19 +194,51 @@ class _PreviewScreenState extends State<PreviewScreen> {
         title: const Text('Preview Pages'),
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft),
-          onPressed: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const ScannerScreen()),
-          ),
+          tooltip: 'Back',
+          onPressed: () {
+            // Go back to scanner
+            Navigator.pop(context);
+          },
         ),
         actions: [
           IconButton(
             icon: const Icon(LucideIcons.plus),
+            tooltip: 'Add more pages',
             onPressed: () {
-              // Add a page - return to camera scanner screen
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ScannerScreen()),
+              // Return to scanner to add more pages
+              Navigator.pop(context);
+            },
+          ),
+          IconButton(
+            icon: const Icon(LucideIcons.x),
+            tooltip: 'Cancel & exit',
+            onPressed: () {
+              // Show confirmation dialog
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: AppTheme.surfaceDark,
+                  title: const Text('Discard pages?', style: TextStyle(color: Colors.white)),
+                  content: const Text(
+                    'Are you sure you want to discard these pages and return to library?',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final state = AppStateProvider.of(context);
+                        state.startNewScan(); // Clear scan queue
+                        // Pop dialog, preview, and scanner to return to main shell
+                        Navigator.of(context).popUntil((route) => route.isFirst);
+                      },
+                      child: const Text('Discard', style: TextStyle(color: AppTheme.danger)),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -396,7 +470,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Next: Choose Quality',
+                      'Next: Export PDF',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                     SizedBox(width: 8),

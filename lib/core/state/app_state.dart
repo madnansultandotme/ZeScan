@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/document.dart';
+import '../services/file_manager_service.dart';
 
 class AppState extends ChangeNotifier {
   final _uuid = const Uuid();
@@ -31,12 +33,49 @@ class AppState extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _isDarkMode = prefs.getBool('is_dark_mode') ?? true;
       _isOnboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
-    } catch (_) {
+      
+      // Load saved documents
+      await _loadDocuments();
+    } catch (e) {
+      debugPrint('AppState: Failed to init preferences: $e');
       _isDarkMode = true;
       _isOnboardingCompleted = false;
     }
     _isInitialized = true;
     notifyListeners();
+  }
+
+  /// Load documents from shared preferences
+  Future<void> _loadDocuments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final documentsJson = prefs.getString('documents');
+      
+      if (documentsJson != null) {
+        final List<dynamic> decoded = jsonDecode(documentsJson);
+        _documents.clear();
+        _documents.addAll(
+          decoded.map((json) => Document.fromJson(json as Map<String, dynamic>)).toList(),
+        );
+        debugPrint('AppState: Loaded ${_documents.length} documents from storage');
+      } else {
+        debugPrint('AppState: No saved documents found');
+      }
+    } catch (e) {
+      debugPrint('AppState: Failed to load documents: $e');
+    }
+  }
+
+  /// Save documents to shared preferences
+  Future<void> _saveDocuments() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_documents.map((doc) => doc.toJson()).toList());
+      await prefs.setString('documents', encoded);
+      debugPrint('AppState: Saved ${_documents.length} documents to storage');
+    } catch (e) {
+      debugPrint('AppState: Failed to save documents: $e');
+    }
   }
 
   Future<void> toggleTheme() async {
@@ -125,48 +164,7 @@ class AppState extends ChangeNotifier {
   ];
 
   AppState() {
-    _seedInitialData();
-  }
-
-  void _seedInitialData() {
-    _documents.addAll([
-      Document(
-        id: 'doc-1',
-        name: 'Maths_Assignment_1',
-        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-        pages: List.generate(4, (i) => mockDocumentSamples[i % mockDocumentSamples.length]),
-        sizeInMb: 1.8,
-        isFavorite: true,
-        folderId: 'assignments',
-      ),
-      Document(
-        id: 'doc-2',
-        name: 'Grocery_Receipt_June',
-        createdAt: DateTime.now().subtract(const Duration(days: 1)),
-        pages: [mockDocumentSamples[1]],
-        sizeInMb: 0.45,
-        isFavorite: false,
-        folderId: 'receipts',
-      ),
-      Document(
-        id: 'doc-3',
-        name: 'Apartment_Lease_2026',
-        createdAt: DateTime.now().subtract(const Duration(days: 3)),
-        pages: List.generate(12, (i) => mockDocumentSamples[i % mockDocumentSamples.length]),
-        sizeInMb: 5.4,
-        isFavorite: true,
-        folderId: 'personal',
-      ),
-      Document(
-        id: 'doc-4',
-        name: 'ZeScan_Pitch_Deck',
-        createdAt: DateTime.now().subtract(const Duration(days: 7)),
-        pages: List.generate(20, (i) => mockDocumentSamples[i % mockDocumentSamples.length]),
-        sizeInMb: 11.2,
-        isFavorite: false,
-        folderId: 'office',
-      ),
-    ]);
+    // Don't seed mock data - library will show real generated PDFs only
   }
 
   // Get filtered documents based on folder selection and search query
@@ -196,19 +194,40 @@ class AppState extends ChangeNotifier {
     final index = _documents.indexWhere((doc) => doc.id == id);
     if (index != -1) {
       _documents[index] = _documents[index].copyWith(isFavorite: !_documents[index].isFavorite);
+      _saveDocuments();
       notifyListeners();
     }
   }
 
-  void deleteDocument(String id) {
+  void deleteDocument(String id) async {
+    final doc = _documents.firstWhere((d) => d.id == id, orElse: () => _documents.first);
+    
+    // Delete PDF file from disk
+    if (doc.pdfPath != null) {
+      await FileManagerService.deletePdf(doc.pdfPath);
+    }
+    
     _documents.removeWhere((doc) => doc.id == id);
+    _saveDocuments();
     notifyListeners();
   }
 
-  void renameDocument(String id, String newName) {
+  void renameDocument(String id, String newName) async {
     final index = _documents.indexWhere((doc) => doc.id == id);
     if (index != -1) {
-      _documents[index] = _documents[index].copyWith(name: newName);
+      final doc = _documents[index];
+      
+      // Rename PDF file on disk if it exists
+      String? newPdfPath = doc.pdfPath;
+      if (doc.pdfPath != null) {
+        final renamedPath = await FileManagerService.renamePdf(doc.pdfPath, newName);
+        if (renamedPath != null) {
+          newPdfPath = renamedPath;
+        }
+      }
+      
+      _documents[index] = doc.copyWith(name: newName, pdfPath: newPdfPath);
+      _saveDocuments();
       notifyListeners();
     }
   }
@@ -217,6 +236,7 @@ class AppState extends ChangeNotifier {
     final index = _documents.indexWhere((doc) => doc.id == id);
     if (index != -1) {
       _documents[index] = _documents[index].copyWith(folderId: targetFolderId);
+      _saveDocuments();
       notifyListeners();
     }
   }
@@ -269,6 +289,7 @@ class AppState extends ChangeNotifier {
     _documents.add(newDoc);
     _scanQueue.clear();
     incrementScanCount();
+    _saveDocuments(); // Persist to storage
     notifyListeners();
     return newDoc;
   }
@@ -292,6 +313,7 @@ class AppState extends ChangeNotifier {
       folderId: 'all',
     );
     _documents.add(newDoc);
+    _saveDocuments();
     notifyListeners();
     return newDoc;
   }
@@ -306,6 +328,7 @@ class AppState extends ChangeNotifier {
       sizeInMb: compressedSize,
     );
     _documents.add(newDoc);
+    _saveDocuments();
     notifyListeners();
     return newDoc;
   }
@@ -327,6 +350,7 @@ class AppState extends ChangeNotifier {
       folderId: doc.folderId,
     );
     _documents.add(newDoc);
+    _saveDocuments();
     notifyListeners();
     return newDoc;
   }
@@ -338,6 +362,7 @@ class AppState extends ChangeNotifier {
       // simulate edit update
       final doc = _documents[index];
       _documents[index] = doc.copyWith(createdAt: DateTime.now());
+      _saveDocuments();
       notifyListeners();
     }
   }
@@ -363,6 +388,7 @@ class AppState extends ChangeNotifier {
           createdAt: DateTime.now(),
         );
       }
+      _saveDocuments();
       notifyListeners();
     }
   }

@@ -6,6 +6,7 @@ import 'library/library_screen.dart';
 import 'toolkit/toolkit_screen.dart';
 import 'settings/settings_screen.dart';
 import 'scanner/scanner_screen.dart';
+import 'favorites/favorites_screen.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,34 +17,28 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
-  late AnimationController _fabController;
 
   final List<Widget> _screens = [
     const LibraryScreen(),
     const ToolkitScreen(),
+    const ScannerScreen(), // Quick Scan in center (index 2)
+    const FavoritesScreen(), // Favorites screen
     const SettingsScreen(),
   ];
 
   @override
   void initState() {
     super.initState();
-    // FAB pulsing animation
-    _fabController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat(reverse: true);
   }
 
   @override
   void dispose() {
-    _fabController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = AppStateProvider.of(context);
-    final isLibraryEmpty = state.documents.isEmpty;
     final isDark = state.isDarkMode;
 
     return Scaffold(
@@ -63,6 +58,10 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) {
+            // Start new scan when tapping Quick Scan (center button - index 2)
+            if (index == 2) {
+              state.startNewScan();
+            }
             setState(() {
               _currentIndex = index;
             });
@@ -70,88 +69,47 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
           backgroundColor: AppTheme.getBackgroundColor(isDark),
           selectedItemColor: AppTheme.primary,
           unselectedItemColor: AppTheme.getTextSecondary(isDark),
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontSize: 10),
+          type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(LucideIcons.files),
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(LucideIcons.files, size: 22),
               ),
               label: 'Library',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(LucideIcons.briefcase),
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(LucideIcons.briefcase, size: 22),
               ),
               label: 'Toolkit',
             ),
             BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: Icon(LucideIcons.settings),
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(LucideIcons.camera, size: 26),
+              ),
+              label: 'Quick Scan',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(LucideIcons.star, size: 22),
+              ),
+              label: 'Favorites',
+            ),
+            BottomNavigationBarItem(
+              icon: Padding(
+                padding: EdgeInsets.only(bottom: 2),
+                child: Icon(LucideIcons.settings, size: 22),
               ),
               label: 'Settings',
             ),
           ],
         ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: AnimatedBuilder(
-        animation: _fabController,
-        builder: (context, child) {
-          // Pulse effect only when library is empty to guide the user
-          final scale = isLibraryEmpty ? 1.0 + (_fabController.value * 0.08) : 1.0;
-          return Transform.scale(
-            scale: scale,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.primary.withOpacity(isLibraryEmpty ? 0.4 + (_fabController.value * 0.2) : 0.4),
-                    blurRadius: isLibraryEmpty ? 12 + (_fabController.value * 6) : 12,
-                    spreadRadius: isLibraryEmpty ? 1 + (_fabController.value * 2) : 1,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                  state.startNewScan();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ScannerScreen()),
-                  );
-                },
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: AppTheme.primaryLight, width: 1),
-                ),
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.camera, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(
-                      isLibraryEmpty ? 'Scan First Doc' : 'Quick Scan',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-                icon: null,
-                extendedPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-          );
-        },
       ),
     );
   }

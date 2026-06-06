@@ -44,12 +44,20 @@ class PdfService {
     PdfQuality quality = PdfQuality.medium,
     void Function(double progress)? onProgress,
   }) async {
+    debugPrint('PdfService: Starting PDF generation with ${imagePaths.length} images');
+    
     final pdf = pw.Document();
     final totalPages = imagePaths.length;
+    int successfulPages = 0;
+
+    // Report initial progress
+    onProgress?.call(0.0);
 
     for (int i = 0; i < totalPages; i++) {
       final imagePath = imagePaths[i];
       final file = File(imagePath);
+
+      debugPrint('PdfService: Processing image ${i + 1}/$totalPages: $imagePath');
 
       if (!await file.exists()) {
         debugPrint('PdfService: Skipping non-existent file: $imagePath');
@@ -58,6 +66,8 @@ class PdfService {
 
       try {
         final Uint8List imageBytes = await file.readAsBytes();
+        debugPrint('PdfService: Image bytes loaded: ${imageBytes.length} bytes');
+        
         final pw.MemoryImage image = pw.MemoryImage(imageBytes);
 
         pdf.addPage(
@@ -75,14 +85,23 @@ class PdfService {
             },
           ),
         );
+
+        successfulPages++;
+
+        // Report progress after each page is added
+        final progress = successfulPages / totalPages;
+        debugPrint('PdfService: Progress: ${(progress * 100).toInt()}% (page $successfulPages/$totalPages)');
+        onProgress?.call(progress);
+        
+        // Small delay to ensure UI updates
+        await Future.delayed(const Duration(milliseconds: 50));
       } catch (e) {
         debugPrint('PdfService: Error processing image $imagePath: $e');
         continue;
       }
-
-      // Report progress
-      onProgress?.call((i + 1) / totalPages);
     }
+
+    debugPrint('PdfService: All pages added, saving PDF...');
 
     // Save to app documents directory
     final outputDir = await getApplicationDocumentsDirectory();
@@ -98,10 +117,12 @@ class PdfService {
     final Uint8List pdfBytes = await pdf.save();
     await outputFile.writeAsBytes(pdfBytes);
 
+    debugPrint('PdfService: PDF saved successfully: $outputPath (${pdfBytes.length} bytes)');
+
     return PdfResult(
       filePath: outputPath,
       fileSizeBytes: pdfBytes.length,
-      pageCount: totalPages,
+      pageCount: successfulPages,
     );
   }
 

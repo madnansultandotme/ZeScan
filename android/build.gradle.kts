@@ -26,6 +26,12 @@ subprojects {
                 }
             }
         }
+        // Force Kotlin to use JVM 17 using new compilerOptions DSL
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+            compilerOptions {
+                jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            }
+        }
     }
 }
 subprojects {

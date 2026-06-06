@@ -40,6 +40,33 @@ class Document {
       pdfPath: pdfPath ?? this.pdfPath,
     );
   }
+
+  // JSON serialization
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'createdAt': createdAt.toIso8601String(),
+      'pages': pages,
+      'sizeInMb': sizeInMb,
+      'isFavorite': isFavorite,
+      'folderId': folderId,
+      'pdfPath': pdfPath,
+    };
+  }
+
+  factory Document.fromJson(Map<String, dynamic> json) {
+    return Document(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      pages: List<String>.from(json['pages'] as List),
+      sizeInMb: (json['sizeInMb'] as num).toDouble(),
+      isFavorite: json['isFavorite'] as bool? ?? false,
+      folderId: json['folderId'] as String,
+      pdfPath: json['pdfPath'] as String?,
+    );
+  }
 }
 
 class Folder {

@@ -3,11 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
-import 'package:share_plus/share_plus.dart';
 import '../../core/theme.dart';
 import '../../core/models/document.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/app_state_provider.dart';
+import '../../core/services/file_manager_service.dart';
+import '../pdf_viewer/pdf_viewer_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -530,14 +531,77 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
               // Action buttons
               _buildActionItem(
+                icon: LucideIcons.eye,
+                label: 'Open PDF',
+                onTap: () async {
+                  Navigator.pop(context);
+                  
+                  if (doc.pdfPath == null || doc.pdfPath!.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('PDF file not found'),
+                        backgroundColor: AppTheme.danger,
+                      ),
+                    );
+                    return;
+                  }
+                  
+                  // Check if file exists
+                  final exists = await FileManagerService.pdfExists(doc.pdfPath);
+                  if (!exists) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('PDF file not found on disk'),
+                          backgroundColor: AppTheme.danger,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  
+                  // Open in built-in PDF viewer
+                  if (context.mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PdfViewerScreen(
+                          pdfPath: doc.pdfPath!,
+                          documentName: doc.name,
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
+              _buildActionItem(
                 icon: LucideIcons.share2,
                 label: 'Share PDF',
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context);
-                  Share.shareXFiles(
-                    [XFile.fromData(Uint8List(0), name: '${doc.name}.pdf', mimeType: 'application/pdf')],
-                    text: 'ZeScan Shared PDF',
-                  );
+                  
+                  try {
+                    if (doc.pdfPath == null || doc.pdfPath!.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('PDF file not found'),
+                          backgroundColor: AppTheme.danger,
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    await FileManagerService.sharePdf(doc.pdfPath, doc.name);
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to share: ${e.toString()}'),
+                          backgroundColor: AppTheme.danger,
+                        ),
+                      );
+                    }
+                  }
                 },
               ),
               _buildActionItem(

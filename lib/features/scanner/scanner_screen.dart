@@ -5,7 +5,9 @@ import 'package:camera/camera.dart';
 import '../../core/theme.dart';
 import '../../core/state/app_state_provider.dart';
 import '../../core/services/permission_service.dart';
+import '../../core/services/document_scanner_service.dart';
 import 'preview_screen.dart';
+import 'image_editor_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -46,10 +48,15 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Handle app lifecycle for camera resource management
-    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
+    final CameraController? cameraController = _cameraController;
+    
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
 
     if (state == AppLifecycleState.inactive) {
-      _cameraController?.dispose();
+      cameraController.dispose();
+      _isCameraInitialized = false;
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
     }
@@ -140,27 +147,12 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
 
       if (!mounted) return;
 
-      state.addPageToScanQueue(photo.path);
-
       setState(() {
         _isScanning = false;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Page ${state.scanQueue.length} captured!'),
-          duration: const Duration(seconds: 1),
-          backgroundColor: AppTheme.primaryLight,
-        ),
-      );
-
-      if (!_isContinuousMode) {
-        // Single Scan Mode: instantly push to Preview
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const PreviewScreen()),
-        );
-      }
+      // Navigate to image editor for manual adjustments
+      _openImageEditor(context, photo.path);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -172,6 +164,60 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
           backgroundColor: AppTheme.danger,
         ),
       );
+    }
+  }
+
+  /// Open image editor for manual crop and rotate
+  void _openImageEditor(BuildContext context, String imagePath) async {
+    // Detect document edges before opening editor
+    debugPrint('ScannerScreen: Detecting document edges...');
+    final corners = await DocumentScannerService.detectDocumentEdges(imagePath);
+    
+    if (!mounted) return;
+
+    // Navigate to editor and wait for result
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageEditorScreen(
+          imagePath: imagePath,
+          detectedCorners: corners, // Pass detected corners
+          onSave: (editedPath) async {
+            final state = AppStateProvider.of(context);
+
+            // Add the edited image directly to queue (no enhancement)
+            state.addPageToScanQueue(editedPath);
+
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Page ${state.scanQueue.length} saved!'),
+                duration: const Duration(seconds: 1),
+                backgroundColor: AppTheme.primaryLight,
+              ),
+            );
+
+            // Close editor and return to scanner
+            Navigator.pop(context);
+
+            if (!_isContinuousMode) {
+              // Single Scan Mode: navigate to Preview (use push, not pushReplacement)
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PreviewScreen()),
+              );
+            }
+            // In continuous mode, just stay on scanner to add more pages
+          },
+        ),
+      ),
+    );
+    
+    // Reinitialize camera when returning from editor
+    if (mounted && !_isCameraInitialized) {
+      debugPrint('ScannerScreen: Reinitializing camera after editor');
+      await _initializeCamera();
     }
   }
 
@@ -188,10 +234,11 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       final List<XFile> images = await picker.pickMultiImage();
       if (images.isNotEmpty) {
         for (var image in images) {
+          // Add image directly to queue (no enhancement)
           state.addPageToScanQueue(image.path);
         }
         if (mounted) {
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const PreviewScreen()),
           );
@@ -410,7 +457,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                         GestureDetector(
                           onTap: () {
                             if (queueCount > 0) {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => const PreviewScreen()),
                               );
