@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { 
   Shield, 
   Ban, 
@@ -22,7 +23,6 @@ import Image from 'next/image';
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeFeature, setActiveFeature] = useState(0);
 
   const features = [
     {
@@ -81,13 +81,6 @@ export default function LandingPage() {
     'Secure & private'
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveFeature((prev) => (prev + 1) % features.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [features.length]);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black text-white">
       {/* Navigation */}
@@ -113,6 +106,7 @@ export default function LandingPage() {
               <a href="#features" className="hover:text-blue-400 transition">Features</a>
               <a href="#tools" className="hover:text-blue-400 transition">PDF Tools</a>
               <a href="#download" className="hover:text-blue-400 transition">Download</a>
+              <Link href="/contact" className="hover:text-blue-400 transition">Contact</Link>
               <a 
                 href="https://play.google.com/store/apps/details?id=com.zeppelinlabs.digital.zescan"
                 target="_blank"
@@ -145,6 +139,7 @@ export default function LandingPage() {
               <a href="#features" className="block hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>Features</a>
               <a href="#tools" className="block hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>PDF Tools</a>
               <a href="#download" className="block hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>Download</a>
+              <Link href="/contact" className="block hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
             </div>
           </motion.div>
         )}
@@ -267,14 +262,9 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 viewport={{ once: true }}
-                onMouseEnter={() => setActiveFeature(index)}
-                className={`bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border transition-all duration-300 cursor-pointer ${
-                  activeFeature === index 
-                    ? 'border-blue-500 shadow-lg shadow-blue-500/20 scale-105' 
-                    : 'border-gray-700 hover:border-gray-600'
-                }`}
+                className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700 hover:border-blue-500 transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-blue-500/20 hover:scale-105"
               >
-                <div className={`text-blue-400 mb-4 transform transition-transform ${activeFeature === index ? 'scale-110' : ''}`}>
+                <div className="text-blue-400 mb-4">
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
@@ -404,11 +394,12 @@ export default function LandingPage() {
             </div>
             
             <div>
-              <h3 className="font-bold mb-4">Features</h3>
+              <h3 className="font-bold mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#features" className="hover:text-blue-400 transition">Document Scanning</a></li>
+                <li><a href="#features" className="hover:text-blue-400 transition">Features</a></li>
                 <li><a href="#tools" className="hover:text-blue-400 transition">PDF Tools</a></li>
-                <li><a href="#features" className="hover:text-blue-400 transition">Privacy & Security</a></li>
+                <li><Link href="/privacy" className="hover:text-blue-400 transition">Privacy Policy</Link></li>
+                <li><Link href="/contact" className="hover:text-blue-400 transition">Contact Us</Link></li>
               </ul>
             </div>
             
